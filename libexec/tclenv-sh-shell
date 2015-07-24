@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+#
+# Summary: Set or show the shell-specific Tcl version
+#
+# Usage: tclenv shell <version>
+#        tclenv shell --unset
+#
+# Sets a shell-specific Tcl version by setting the `TCLENV_VERSION'
+# environment variable in your shell. This version overrides local
+# application-specific versions and the global version.
+#
+# <version> should be a string matching a Tcl version known to tclenv.
+# The special version string `system' will use your default system Tcl.
+# Run `tclenv versions' for a list of available Tcl versions.
+
+set -e
+[ -n "$TCLENV_DEBUG" ] && set -x
+
+# Provide tclenv completions
+if [ "$1" = "--complete" ]; then
+  echo --unset
+  echo system
+  exec tclenv-versions --bare
+fi
+
+version="$1"
+shell="$(basename "${TCLENV_SHELL:-$SHELL}")"
+
+if [ -z "$version" ]; then
+  if [ -z "$TCLENV_VERSION" ]; then
+    echo "tclenv: no shell-specific version configured" >&2
+    exit 1
+  else
+    echo "echo \"\$TCLENV_VERSION\""
+    exit
+  fi
+fi
+
+if [ "$version" = "--unset" ]; then
+  case "$shell" in
+  fish )
+    echo "set -e TCLENV_VERSION"
+    ;;
+  * )
+    echo "unset TCLENV_VERSION"
+    ;;
+  esac
+  exit
+fi
+
+# Make sure the specified version is installed.
+if tclenv-prefix "$version" >/dev/null; then
+  case "$shell" in
+  fish )
+    echo "setenv TCLENV_VERSION \"${version}\""
+    ;;
+  * )
+    echo "export TCLENV_VERSION=\"${version}\""
+    ;;
+  esac
+else
+  echo "false"
+  exit 1
+fi

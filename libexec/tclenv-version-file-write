@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Usage: tclenv version-file-write <file> <version>
+
+set -e
+[ -n "$TCLENV_DEBUG" ] && set -x
+
+TCLENV_VERSION_FILE="$1"
+TCLENV_VERSION="$2"
+
+if [ -z "$TCLENV_VERSION" ] || [ -z "$TCLENV_VERSION_FILE" ]; then
+  tclenv-help --usage version-file-write >&2
+  exit 1
+fi
+
+# Make sure the specified version is installed.
+tclenv-prefix "$TCLENV_VERSION" >/dev/null
+
+# Write the version out to disk.
+echo "$TCLENV_VERSION" > "$TCLENV_VERSION_FILE"

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Usage: tclenv completions <command> [arg1 arg2...]
+
+set -e
+[ -n "$TCLENV_DEBUG" ] && set -x
+
+COMMAND="$1"
+if [ -z "$COMMAND" ]; then
+  tclenv-help --usage completions >&2
+  exit 1
+fi
+
+COMMAND_PATH="$(command -v "tclenv-$COMMAND" || command -v "tclenv-sh-$COMMAND")"
+if grep -iE "^([#%]|--|//) provide tclenv completions" "$COMMAND_PATH" >/dev/null; then
+  shift
+  exec "$COMMAND_PATH" --complete "$@"
+fi

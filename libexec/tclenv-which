@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+#
+# Summary: Display the full path to an executable
+#
+# Usage: tclenv which <command>
+#
+# Displays the full path to the executable that tclenv will invoke when
+# you run the given command.
+
+set -e
+[ -n "$TCLENV_DEBUG" ] && set -x
+
+# Provide tclenv completions
+if [ "$1" = "--complete" ]; then
+  exec tclenv-shims --short
+fi
+
+remove_from_path() {
+  local path_to_remove="$1"
+  local path_before
+  local result=":$PATH:"
+  while [ "$path_before" != "$result" ]; do
+    path_before="$result"
+    result="${result//:$path_to_remove:/:}"
+  done
+  echo "${result%:}"
+}
+
+TCLENV_COMMAND="$1"
+
+if [ -z "$TCLENV_COMMAND" ]; then
+  tclenv-help --usage which >&2
+  exit 1
+fi
+
+TCLENV_VERSION="${TCLENV_VERSION:-$(tclenv-version-name)}"
+
+if [ "$TCLENV_VERSION" = "system" ]; then
+  PATH="$(remove_from_path "${TCLENV_ROOT}/shims")"
+  TCLENV_COMMAND_PATH="$(command -v "$TCLENV_COMMAND" || true)"
+else
+  TCLENV_COMMAND_PATH="${TCLENV_ROOT}/versions/${TCLENV_VERSION}/bin/${TCLENV_COMMAND}"
+fi
+
+OLDIFS="$IFS"
+IFS=$'\n' scripts=(`tclenv-hooks which`)
+IFS="$OLDIFS"
+for script in "${scripts[@]}"; do
+  source "$script"
+done
+
+if [ -x "$TCLENV_COMMAND_PATH" ]; then
+  echo "$TCLENV_COMMAND_PATH"
+elif ! [ -d "${TCLENV_ROOT}/versions/${TCLENV_VERSION}" ]; then
+  echo "tclenv: version \`$TCLENV_VERSION' is not installed (set by $(tclenv-version-origin))" >&2
+  exit 1
+else
+  echo "tclenv: $TCLENV_COMMAND: command not found" >&2
+
+  versions="$(tclenv-whence "$TCLENV_COMMAND" || true)"
+  if [ -n "$versions" ]; then
+    { echo
+      echo "The \`$1' command exists in these Tcl versions:"
+      echo "$versions" | sed 's/^/  /g'
+      echo
+    } >&2
+  fi
+
+  exit 127
+fi

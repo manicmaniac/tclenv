@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# Summary: List all Tcl versions available to tclenv
+# Usage: tclenv versions [--bare]
+#
+# Lists all Tcl versions found in `$TCLENV_ROOT/versions/*'.
+
+set -e
+[ -n "$TCLENV_DEBUG" ] && set -x
+
+if [ "$1" = "--bare" ]; then
+  hit_prefix=""
+  miss_prefix=""
+  current_version=""
+  include_system=""
+else
+  hit_prefix="* "
+  miss_prefix="  "
+  current_version="$(tclenv-version-name || true)"
+  include_system="1"
+fi
+
+num_versions=0
+
+print_version() {
+  if [ "$1" == "$current_version" ]; then
+    echo "${hit_prefix}$(tclenv-version 2>/dev/null)"
+  else
+    echo "${miss_prefix}$1"
+  fi
+  num_versions=$((num_versions + 1))
+}
+
+# Include "system" in the non-bare output, if it exists
+if [ -n "$include_system" ] && TCLENV_VERSION=system tclenv-which tcl >/dev/null 2>&1; then
+  print_version system
+fi
+
+shopt -s nullglob
+for path in "${TCLENV_ROOT}/versions/"*; do
+  if [ -d "$path" ]; then
+    print_version "${path##*/}"
+  fi
+done
+shopt -u nullglob
+
+if [ "$num_versions" -eq 0 ] && [ -n "$include_system" ]; then
+  echo "Warning: no Tcl detected on the system" >&2
+  exit 1
+fi

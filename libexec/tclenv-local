@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+#
+# Summary: Set or show the local application-specific Tcl version
+#
+# Usage: tclenv local <version>
+#        tclenv local --unset
+#
+# Sets the local application-specific Tcl version by writing the
+# version name to a file named `.tcl-version'.
+#
+# When you run a Tcl command, tclenv will look for a `.tcl-version'
+# file in the current directory and each parent directory. If no such
+# file is found in the tree, tclenv will use the global Tcl version
+# specified with `tclenv global'. A version specified with the
+# `TCLENV_VERSION' environment variable takes precedence over local
+# and global versions.
+#
+# For backwards compatibility, tclenv will also read version
+# specifications from `.tclenv-version' files, but a `.tcl-version'
+# file in the same directory takes precedence.
+#
+# <version> should be a string matching a Tcl version known to tclenv.
+# The special version string `system' will use your default system Tcl.
+# Run `tclenv versions' for a list of available Tcl versions.
+
+set -e
+[ -n "$TCLENV_DEBUG" ] && set -x
+
+# Provide tclenv completions
+if [ "$1" = "--complete" ]; then
+  echo --unset
+  echo system
+  exec tclenv-versions --bare
+fi
+
+TCLENV_VERSION="$1"
+
+if [ "$TCLENV_VERSION" = "--unset" ]; then
+  rm -f .tcl-version .tclenv-version
+elif [ -n "$TCLENV_VERSION" ]; then
+  previous_file="$(TCLENV_VERSION= tclenv-version-origin || true)"
+  tclenv-version-file-write .tcl-version "$TCLENV_VERSION"
+  if [ "$previous_file" -ef .tclenv-version ]; then
+    rm -f .tclenv-version
+    { echo "tclenv: removed existing \`.tclenv-version' file and migrated"
+      echo "       local version specification to \`.tcl-version' file"
+    } >&2
+  fi
+else
+  tclenv-version-file-read .tcl-version ||
+  tclenv-version-file-read .tclenv-version ||
+  { echo "tclenv: no local version configured for this directory"
+    exit 1
+  } >&2
+fi

@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Summary: Display prefix for a Tcl version
+# Usage: tclenv prefix [<version>]
+#
+# Displays the directory where a Tcl version is installed. If no
+# version is given, `tclenv prefix' displays the location of the
+# currently selected version.
+
+set -e
+[ -n "$TCLENV_DEBUG" ] && set -x
+
+# Provide tclenv completions
+if [ "$1" = "--complete" ]; then
+  echo system
+  exec tclenv-versions --bare
+fi
+
+if [ -n "$1" ]; then
+  export TCLENV_VERSION="$1"
+elif [ -z "$TCLENV_VERSION" ]; then
+  TCLENV_VERSION="$(tclenv-version-name)"
+fi
+
+if [ "$TCLENV_VERSION" = "system" ]; then
+  if TCL_PATH="$(tclenv-which tcl 2>/dev/null)"; then
+    TCL_PATH="${TCL_PATH%/*}"
+    echo "${TCL_PATH%/bin}"
+    exit
+  else
+    echo "tclenv: system version not found in PATH" >&2
+    exit 1
+  fi
+fi
+
+TCLENV_PREFIX_PATH="${TCLENV_ROOT}/versions/${TCLENV_VERSION}"
+if [ ! -d "$TCLENV_PREFIX_PATH" ]; then
+  echo "tclenv: version \`${TCLENV_VERSION}' not installed" >&2
+  exit 1
+fi
+
+echo "$TCLENV_PREFIX_PATH"

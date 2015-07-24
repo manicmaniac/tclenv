@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -e
+[ -n "$TCLENV_DEBUG" ] && set -x
+
+# Provide tclenv completions
+if [ "$1" = "--complete" ]; then
+  exec tclenv-rehash --complete
+fi
+
+shell="$(basename "${TCLENV_SHELL:-$SHELL}")"
+
+# When tclenv shell integration is enabled, delegate to tclenv-rehash,
+# then tell the shell to empty its command lookup cache.
+tclenv-rehash
+
+case "$shell" in
+fish )
+  # no rehash support
+  ;;
+* )
+  echo "hash -r 2>/dev/null || true"
+  ;;
+esac

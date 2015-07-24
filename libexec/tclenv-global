@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+#
+# Summary: Set or show the global Tcl version
+#
+# Usage: tclenv global <version>
+#
+# Sets the global Tcl version. You can override the global version at
+# any time by setting a directory-specific version with `tclenv local'
+# or by setting the `TCLENV_VERSION' environment variable.
+#
+# <version> should be a string matching a Tcl version known to tclenv.
+# The special version string `system' will use your default system Tcl.
+# Run `tclenv versions' for a list of available Tcl versions.
+
+set -e
+[ -n "$TCLENV_DEBUG" ] && set -x
+
+# Provide tclenv completions
+if [ "$1" = "--complete" ]; then
+  echo system
+  exec tclenv-versions --bare
+fi
+
+TCLENV_VERSION="$1"
+TCLENV_VERSION_FILE="${TCLENV_ROOT}/version"
+
+if [ -n "$TCLENV_VERSION" ]; then
+  tclenv-version-file-write "$TCLENV_VERSION_FILE" "$TCLENV_VERSION"
+else
+  tclenv-version-file-read "$TCLENV_VERSION_FILE" ||
+  tclenv-version-file-read "${TCLENV_ROOT}/global" ||
+  tclenv-version-file-read "${TCLENV_ROOT}/default" ||
+  echo system
+fi

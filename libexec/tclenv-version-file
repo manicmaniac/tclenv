@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Summary: Detect the file that sets the current tclenv version
+set -e
+[ -n "$TCLENV_DEBUG" ] && set -x
+
+find_local_version_file() {
+  local root="$1"
+  while true; do
+    if [ -e "${root}/.tcl-version" ]; then
+      echo "${root}/.tcl-version"
+      exit
+    elif [ -e "${root}/.tclenv-version" ]; then
+      echo "${root}/.tclenv-version"
+      exit
+    fi
+    [ -n "$root" ] || break
+    root="${root%/*}"
+  done
+}
+
+find_local_version_file "$TCLENV_DIR"
+[ "$TCLENV_DIR" = "$PWD" ] || find_local_version_file "$PWD"
+
+global_version_file="${TCLENV_ROOT}/version"
+
+if [ -e "$global_version_file" ]; then
+  echo "$global_version_file"
+elif [ -e "${TCLENV_ROOT}/global" ]; then
+  echo "${TCLENV_ROOT}/global"
+elif [ -e "${TCLENV_ROOT}/default" ]; then
+  echo "${TCLENV_ROOT}/default"
+else
+  echo "$global_version_file"
+fi

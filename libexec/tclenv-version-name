@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Summary: Show the current Tcl version
+set -e
+[ -n "$TCLENV_DEBUG" ] && set -x
+
+if [ -z "$TCLENV_VERSION" ]; then
+  TCLENV_VERSION_FILE="$(tclenv-version-file)"
+  TCLENV_VERSION="$(tclenv-version-file-read "$TCLENV_VERSION_FILE" || true)"
+fi
+
+if [ -z "$TCLENV_VERSION" ] || [ "$TCLENV_VERSION" = "system" ]; then
+  echo "system"
+  exit
+fi
+
+version_exists() {
+  local version="$1"
+  [ -d "${TCLENV_ROOT}/versions/${version}" ]
+}
+
+if version_exists "$TCLENV_VERSION"; then
+  echo "$TCLENV_VERSION"
+elif version_exists "${TCLENV_VERSION#tcl-}"; then
+  echo "${TCLENV_VERSION#tcl-}"
+else
+  echo "tclenv: version \`$TCLENV_VERSION' is not installed (set by $(tclenv-version-origin))" >&2
+  exit 1
+fi

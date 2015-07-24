@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Summary: List all Tcl versions that contain the given executable
+# Usage: tclenv whence [--path] <command>
+
+set -e
+[ -n "$TCLENV_DEBUG" ] && set -x
+
+# Provide tclenv completions
+if [ "$1" = "--complete" ]; then
+  echo --path
+  exec tclenv-shims --short
+fi
+
+if [ "$1" = "--path" ]; then
+  print_paths="1"
+  shift
+else
+  print_paths=""
+fi
+
+whence() {
+  local command="$1"
+  tclenv-versions --bare | while read version; do
+    path="$(tclenv-prefix "$version")/bin/${command}"
+    if [ -x "$path" ]; then
+      [ "$print_paths" ] && echo "$path" || echo "$version"
+    fi
+  done
+}
+
+TCLENV_COMMAND="$1"
+if [ -z "$TCLENV_COMMAND" ]; then
+  tclenv-help --usage whence >&2
+  exit 1
+fi
+
+result="$(whence "$TCLENV_COMMAND")"
+[ -n "$result" ] && echo "$result"

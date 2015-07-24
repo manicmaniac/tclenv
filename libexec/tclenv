@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+set -e
+export -n CDPATH
+
+if [ "$1" = "--debug" ]; then
+  export TCLENV_DEBUG=1
+  shift
+fi
+
+if [ -n "$TCLENV_DEBUG" ]; then
+  export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
+  set -x
+fi
+
+if enable -f "${0%/*}"/../libexec/tclenv-realpath.dylib realpath 2>/dev/null; then
+  abs_dirname() {
+    local path="$(realpath "$1")"
+    echo "${path%/*}"
+  }
+else
+  if [ -n "$TCLENV_NATIVE_EXT" ]; then
+    echo "tclenv: failed to load \`realpath' builtin" >&2
+    exit 1
+  fi
+READLINK=$(type -p greadlink readlink | head -1)
+if [ -z "$READLINK" ]; then
+  echo "tclenv: cannot find readlink - are you missing GNU coreutils?" >&2
+  exit 1
+fi
+
+resolve_link() {
+  $READLINK "$1"
+}
+
+abs_dirname() {
+  local cwd="$(pwd)"
+  local path="$1"
+
+  while [ -n "$path" ]; do
+    cd "${path%/*}"
+    local name="${path##*/}"
+    path="$(resolve_link "$name" || true)"
+  done
+
+  pwd
+  cd "$cwd"
+}
+fi
+
+if [ -z "${TCLENV_ROOT}" ]; then
+  TCLENV_ROOT="${HOME}/.tclenv"
+else
+  TCLENV_ROOT="${TCLENV_ROOT%/}"
+fi
+export TCLENV_ROOT
+
+if [ -z "${TCLENV_DIR}" ]; then
+  TCLENV_DIR="$(pwd)"
+else
+  cd "$TCLENV_DIR" 2>/dev/null || {
+    echo "tclenv: cannot change working directory to \`$TCLENV_DIR'"
+    exit 1
+  } >&2
+  TCLENV_DIR="$(pwd)"
+  cd "$OLDPWD"
+fi
+export TCLENV_DIR
+
+
+shopt -s nullglob
+
+bin_path="$(abs_dirname "$0")"
+for plugin_bin in "${TCLENV_ROOT}/plugins/"*/bin; do
+  PATH="${plugin_bin}:${PATH}"
+done
+export PATH="${bin_path}:${PATH}"
+
+TCLENV_HOOK_PATH="${TCLENV_HOOK_PATH}:${TCLENV_ROOT}/tclenv.d"
+if [ "${bin_path%/*}" != "$TCLENV_ROOT" ]; then
+  # Add tclenv's own `tclenv.d` unless tclenv was cloned to TCLENV_ROOT
+  TCLENV_HOOK_PATH="${TCLENV_HOOK_PATH}:${bin_path%/*}/tclenv.d"
+fi
+TCLENV_HOOK_PATH="${TCLENV_HOOK_PATH}:/usr/local/etc/tclenv.d:/etc/tclenv.d:/usr/lib/tclenv/hooks"
+for plugin_hook in "${TCLENV_ROOT}/plugins/"*/etc/tclenv.d; do
+  TCLENV_HOOK_PATH="${TCLENV_HOOK_PATH}:${plugin_hook}"
+done
+export TCLENV_HOOK_PATH
+
+shopt -u nullglob
+
+
+command="$1"
+case "$command" in
+"" | "-h" | "--help" )
+  echo -e "$(tclenv---version)\n$(tclenv-help)" >&2
+  ;;
+"-v" )
+  exec tclenv---version
+  ;;
+* )
+  command_path="$(command -v "tclenv-$command" || true)"
+  if [ -z "$command_path" ]; then
+    echo "tclenv: no such command \`$command'" >&2
+    exit 1
+  fi
+
+  shift 1
+  exec "$command_path" "$@"
+  ;;
+esac
