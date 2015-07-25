@@ -57,8 +57,8 @@ load test_helper
   run tclenv echo -F: "PATH"
   assert_success
   assert_line 0 "${BATS_TEST_DIRNAME%/*}/libexec"
-  assert_line 1 "${TCLENV_ROOT}/plugins/tcl-build/bin"
-  assert_line 2 "${TCLENV_ROOT}/plugins/tclenv-each/bin"
+  assert_line 1 "${TCLENV_ROOT}/plugins/tclenv-each/bin"
+  assert_line 2 "${TCLENV_ROOT}/plugins/tcl-build/bin"
 }
 
 @test "TCLENV_HOOK_PATH preserves value from environment" {
