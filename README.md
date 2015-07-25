@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/manicmaniac/tclenv.svg)](https://travis-ci.org/manicmaniac/tclenv)
+
 # Groom your app’s Tcl environment with tclenv.
 
 Use tclenv to pick a Tcl version for your application and guarantee
