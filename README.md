@@ -1,19 +1,16 @@
 # Groom your app’s Tcl environment with tclenv.
 
 Use tclenv to pick a Tcl version for your application and guarantee
-that your development environment matches production. Put tclenv to work
-with [Bundler](http://bundler.io/) for painless Tcl upgrades and
-bulletproof deployments.
+that your development environment matches production.
 
 **Powerful in development.** Specify your app's Tcl version once,
   in a single file. Keep all your teammates on the same page. No
   headaches running apps on different versions of Tcl. Just Works™
-  from the command line and with app servers like [Pow](http://pow.cx).
+  from the command line.
   Override the Tcl version anytime: just set an environment variable.
 
 **Rock-solid in production.** Your application's executables are its
-  interface with ops. With tclenv and [Bundler
-  binstubs](https://github.com/manicmaniac/tclenv/wiki/Understanding-binstubs)
+  interface with ops.
   you'll never again need to `cd` in a cron job or Chef recipe to
   ensure you've selected the right runtime. The Tcl version
   dependency lives in one place—your app—so upgrades and rollbacks are
@@ -23,13 +20,6 @@ bulletproof deployments.
   versions. It's simple and predictable. A rich plugin ecosystem lets
   you tailor it to suit your needs. Compile your own Tcl versions, or
   use the [tcl-build][]
-  plugin to automate the process. Specify per-application environment
-  variables with [tclenv-vars](https://github.com/manicmaniac/tclenv-vars).
-  See more [plugins on the
-  wiki](https://github.com/manicmaniac/tclenv/wiki/Plugins).
-
-[**Why choose tclenv over
-RVM?**](https://github.com/manicmaniac/tclenv/wiki/Why-tclenv%3F)
 
 ## Table of Contents
 
@@ -67,7 +57,7 @@ to the correct Tcl installation.
 
 ### Understanding PATH
 
-When you run a command like `tcl` or `rake`, your operating system
+When you run a command like `tclsh` or `wish`, your operating system
 searches through a list of directories to find an executable file with
 that name. This list of directories lives in an environment variable
 called `PATH`, with each directory in the list separated by a colon:
@@ -89,15 +79,15 @@ tclenv works by inserting a directory of _shims_ at the front of your
 
 Through a process called _rehashing_, tclenv maintains shims in that
 directory to match every Tcl command across every installed version
-of Tcl—`irb`, `gem`, `rake`, `rails`, `tcl`, and so on.
+of Tcl—`tclsh`, `wish`, `expect`, and so on.
 
 Shims are lightweight executables that simply pass your command along
-to tclenv. So with tclenv installed, when you run, say, `rake`, your
+to tclenv. So with tclenv installed, when you run, say, `tclsh`, your
 operating system will do the following:
 
-* Search your `PATH` for an executable file named `rake`
-* Find the tclenv shim named `rake` at the beginning of your `PATH`
-* Run the shim named `rake`, which in turn passes the command along to
+* Search your `PATH` for an executable file named `tclsh`
+* Find the tclenv shim named `tclsh` at the beginning of your `PATH`
+* Run the shim named `tclsh`, which in turn passes the command along to
   tclenv
 
 ### Choosing the Tcl Version
@@ -105,7 +95,7 @@ operating system will do the following:
 When you execute a shim, tclenv determines which Tcl version to use by
 reading it from the following sources, in this order:
 
-1. The `tclenv_VERSION` environment variable, if specified. You can use
+1. The `TCLENV_VERSION` environment variable, if specified. You can use
    the [`tclenv shell`](#tclenv-shell) command to set this environment
    variable in your current shell session.
 
@@ -134,18 +124,13 @@ Each Tcl version is installed into its own directory under
 `~/.tclenv/versions`. For example, you might have these versions
 installed:
 
-* `~/.tclenv/versions/1.8.7-p371/`
-* `~/.tclenv/versions/1.9.3-p327/`
-* `~/.tclenv/versions/jtcl-1.7.1/`
+* `~/.tclenv/versions/8.0.2/`
+* `~/.tclenv/versions/8.6-b3/`
 
 Version names to tclenv are simply the names of the directories in
 `~/.tclenv/versions`.
 
 ## Installation
-
-**Compatibility note**: tclenv is _incompatible_ with RVM. Please make
-  sure to fully uninstall RVM and remove any references to it from
-  your shell initialization files before installing tclenv.
 
 If you're on Mac OS X, consider
 [installing with Homebrew](#homebrew-on-mac-os-x).
@@ -277,7 +262,7 @@ should be able to:
 $ tclenv install -l
 
 # install a Tcl version:
-$ tclenv install 2.0.0-p247
+$ tclenv install 8.6.4
 ~~~
 
 Alternatively to the `install` command, you can download and compile
@@ -336,7 +321,7 @@ overrides the global version, and can be overridden itself by setting
 the `tclenv_VERSION` environment variable or with the `tclenv shell`
 command.
 
-    $ tclenv local 1.9.3-p327
+    $ tclenv local 8.6.4
 
 When run without a version number, `tclenv local` reports the currently
 configured local version. You can also unset the local version:
@@ -353,9 +338,9 @@ read a local version specified in an `.tclenv-version` file, but a
 Sets the global version of Tcl to be used in all shells by writing
 the version name to the `~/.tclenv/version` file. This version can be
 overridden by an application-specific `.tcl-version` file, or by
-setting the `tclenv_VERSION` environment variable.
+setting the `TCLENV_VERSION` environment variable.
 
-    $ tclenv global 1.8.7-p352
+    $ tclenv global 8.6.4
 
 The special version name `system` tells tclenv to use the system Tcl
 (detected by searching your `$PATH`).
@@ -365,14 +350,14 @@ currently configured global version.
 
 ### tclenv shell
 
-Sets a shell-specific Tcl version by setting the `tclenv_VERSION`
+Sets a shell-specific Tcl version by setting the `TCLENV_VERSION`
 environment variable in your shell. This version overrides
 application-specific versions and the global version.
 
-    $ tclenv shell jtcl-1.7.1
+    $ tclenv shell 8.6.4
 
 When run without a version number, `tclenv shell` reports the current
-value of `tclenv_VERSION`. You can also unset the shell version:
+value of `TCLENV_VERSION`. You can also unset the shell version:
 
     $ tclenv shell --unset
 
@@ -381,7 +366,7 @@ the installation instructions) in order to use this command. If you
 prefer not to use shell integration, you may simply set the
 `tclenv_VERSION` variable yourself:
 
-    $ export tclenv_VERSION=jtcl-1.7.1
+    $ export TCLENV_VERSION=8.0.2
 
 ### tclenv versions
 
@@ -389,12 +374,8 @@ Lists all Tcl versions known to tclenv, and shows an asterisk next to
 the currently active version.
 
     $ tclenv versions
-      1.8.7-p352
-      1.9.2-p290
-    * 1.9.3-p327 (set by /Users/sam/.tclenv/version)
-      jtcl-1.7.1
-      rbx-1.2.4
-      ree-1.8.7-2011.03
+      8.0.2
+    * 8.6.4 (set by /Users/sam/.tclenv/version)
 
 ### tclenv version
 
@@ -402,13 +383,13 @@ Displays the currently active Tcl version, along with information on
 how it was set.
 
     $ tclenv version
-    1.9.3-p327 (set by /Users/sam/.tclenv/version)
+    8.6.4 (set by /Users/sam/.tclenv/version)
 
 ### tclenv rehash
 
 Installs shims for all Tcl executables known to tclenv (i.e.,
 `~/.tclenv/versions/*/bin/*`). Run this command after you install a new
-version of Tcl, or install a gem that provides commands.
+version of Tcl.
 
     $ tclenv rehash
 
@@ -417,17 +398,16 @@ version of Tcl, or install a gem that provides commands.
 Displays the full path to the executable that tclenv will invoke when
 you run the given command.
 
-    $ tclenv which irb
-    /Users/sam/.tclenv/versions/1.9.3-p327/bin/irb
+    $ tclenv which tclsh
+    /Users/sam/.tclenv/versions/8.6.4/bin/tclsh
 
 ### tclenv whence
 
 Lists all Tcl versions with the given command installed.
 
-    $ tclenv whence rackup
-    1.9.3-p327
-    jtcl-1.7.1
-    ree-1.8.7-2011.03
+    $ tclenv whence expect
+    8.0.2
+    8.6.4
 
 ## Environment variables
 
@@ -435,11 +415,11 @@ You can affect how tclenv operates with the following settings:
 
 name | default | description
 -----|---------|------------
-`tclenv_VERSION` | | Specifies the Tcl version to be used.<br>Also see [`tclenv shell`](#tclenv-shell)
-`tclenv_ROOT` | `~/.tclenv` | Defines the directory under which Tcl versions and shims reside.<br>Also see `tclenv root`
-`tclenv_DEBUG` | | Outputs debug information.<br>Also as: `tclenv --debug <subcommand>`
-`tclenv_HOOK_PATH` | [_see wiki_][hooks] | Colon-separated list of paths searched for tclenv hooks.
-`tclenv_DIR` | `$PWD` | Directory to start searching for `.tcl-version` files.
+`TCLENV_VERSION` | | Specifies the Tcl version to be used.<br>Also see [`tclenv shell`](#tclenv-shell)
+`TCLENV_ROOT` | `~/.tclenv` | Defines the directory under which Tcl versions and shims reside.<br>Also see `tclenv root`
+`TCLENV_DEBUG` | | Outputs debug information.<br>Also as: `tclenv --debug <subcommand>`
+`TCLENV_HOOK_PATH` | [_see wiki_][hooks] | Colon-separated list of paths searched for tclenv hooks.
+`TCLENV_DIR` | `$PWD` | Directory to start searching for `.tcl-version` files.
 
 ## Development
 
@@ -447,7 +427,7 @@ The tclenv source code is [hosted on
 GitHub](https://github.com/manicmaniac/tclenv). It's clean, modular,
 and easy to understand, even if you're not a shell hacker.
 
-Tests are executed using [Bats](https://github.com/manicmaniac/bats):
+Tests are executed using [Bats](https://github.com/sstephenson/bats):
 
     $ bats test
     $ bats test/<file>.bats
