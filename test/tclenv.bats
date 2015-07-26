@@ -5,7 +5,7 @@ load test_helper
 @test "blank invocation" {
   run tclenv
   assert_success
-  assert [ "${lines[0]}" = "tclenv 0.4.0" ]
+  assert [ "${lines[0]}" = "tclenv 0.0.1" ]
 }
 
 @test "invalid command" {
