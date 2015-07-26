@@ -31,7 +31,7 @@ print_version() {
 }
 
 # Include "system" in the non-bare output, if it exists
-if [ -n "$include_system" ] && TCLENV_VERSION=system tclenv-which tcl >/dev/null 2>&1; then
+if [ -n "$include_system" ] && TCLENV_VERSION=system tclenv-which tclsh >/dev/null 2>&1; then
   print_version system
 fi
 

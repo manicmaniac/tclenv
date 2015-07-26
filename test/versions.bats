@@ -12,7 +12,7 @@ setup() {
 }
 
 stub_system_tcl() {
-  local stub="${TCLENV_TEST_DIR}/bin/tcl"
+  local stub="${TCLENV_TEST_DIR}/bin/tclsh"
   mkdir -p "$(dirname "$stub")"
   touch "$stub" && chmod +x "$stub"
 }
@@ -24,8 +24,8 @@ stub_system_tcl() {
   assert_success "* system (set by ${TCLENV_ROOT}/version)"
 }
 
-@test "not even system tcl available" {
-  PATH="$(path_without tcl)" run tclenv-versions
+@test "not even system tclsh available" {
+  PATH="$(path_without tclsh)" run tclenv-versions
   assert_failure
   assert_output "Warning: no Tcl detected on the system"
 }
